@@ -1,0 +1,11 @@
+.git
+.metadata
+.recommenders
+RemotSystemTempFiles
+ElasticTagger/bin
+ElasticTagger/build
+ElasticTagger/gradle
+ElasticTagger/.gradle
+ElasticTagger/.settings
+ElasticTagger/.project
+ElasticTagger/.classpath

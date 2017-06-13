@@ -1,0 +1,36 @@
+buildscript {
+	dependencies {
+		classpath group: "com.liferay", name: "com.liferay.gradle.plugins", version: "3.1.3"
+	}
+
+	repositories {
+		mavenLocal()
+
+		maven {
+			url "https://cdn.lfrs.sl/repository.liferay.com/nexus/content/groups/public"
+		}
+	}
+}
+
+apply plugin: "com.liferay.plugin"
+
+dependencies {
+	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "2.0.0"
+	compileOnly group: "org.osgi", name: "osgi.cmpn", version: "6.0.0"
+	// DDLRecord
+	//compileOnly group: "com.liferay", name: "com.liferay.dynamic.data.lists.api", version: "2.1.0"
+	// Web Content
+	compileOnly group: "com.liferay", name: "com.liferay.journal.api", version: "2.7.0"
+	// https://mvnrepository.com/artifact/org.elasticsearch/elasticsearch
+	//compile group: 'org.elasticsearch', name: "elasticsearch", version: '2.2.0'
+	// local libs that are available in DXP
+	compile fileTree(include: ['*.jar'], dir: 'libs')
+}
+
+repositories {
+	mavenLocal()
+
+	maven {
+		url "https://cdn.lfrs.sl/repository.liferay.com/nexus/content/groups/public"
+	}
+}
