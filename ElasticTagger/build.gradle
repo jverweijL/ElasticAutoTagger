@@ -22,9 +22,9 @@ dependencies {
 	// Web Content
 	compileOnly group: "com.liferay", name: "com.liferay.journal.api", version: "2.7.0"
 	// https://mvnrepository.com/artifact/org.elasticsearch/elasticsearch
-	//compile group: 'org.elasticsearch', name: "elasticsearch", version: '2.2.0'
+	//compileInclude group: 'org.elasticsearch', name: "elasticsearch", version: '2.2.0'
 	// local libs that are available in DXP
-	compile fileTree(include: ['*.jar'], dir: 'libs')
+	compileInclude fileTree(include: ['*.jar'], dir: 'libs')
 }
 
 repositories {

@@ -1,3 +1,5 @@
 Bundle-Name: ElasticTagger
 Bundle-SymbolicName: com.liferay.tagger
 Bundle-Version: 1.0.0
+#Bundle-ClassPath: .,lib/elasticsearch.jar
+#-includeresource: lib/elasticsearch.jar=libs/org.elasticsearch-2.2.0.LIFERAY-PATCHED-2.jar;lib=true,lib/hppc.jar=libs/hppc-0.7.1.jar;lib=true

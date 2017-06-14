@@ -12,7 +12,11 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.ModelListener;
 
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.URL;
 import java.util.List;
 
 import org.elasticsearch.client.Client;
@@ -56,6 +60,7 @@ public class ElasticAutoTagger extends BaseModelListener<JournalArticle> {
 	    }*/
 		
 		try {
+			// doesn't seem to work due to OSGI no able to get to elastic libs
 			_log.error("create ELS client");
 			Client client = TransportClient.builder().build()
 			        .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9200));
@@ -63,6 +68,32 @@ public class ElasticAutoTagger extends BaseModelListener<JournalArticle> {
 			// on shutdown
 			_log.error("close ELS client");
 			client.close();
+			
+			String url = "http://localhost:9200/liferay-autotagger/my-type/_percolate'";
+
+			URL obj = new URL(url);
+			HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+			con.setDoOutput(true);
+			con.setDoInput(true);
+			// optional default is GET
+			con.setRequestMethod("GET");
+			
+			OutputStream os = con.getOutputStream();
+			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
+			osw.write("{\"doc\" : {\"message\" : \"A new bonsai tree in the office\"}}");
+			osw.flush();
+			osw.close();
+			
+
+			
+			
+			int responseCode = con.getResponseCode();
+			
+			_log.error("Responsecode: " + responseCode);
+			
+			con.disconnect();
+			
+			
 			
 			
 			AssetTag assetTag = AssetTagLocalServiceUtil.getTag(model.getGroupId(), autoTag);
