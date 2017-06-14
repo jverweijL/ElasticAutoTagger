@@ -24,7 +24,7 @@ dependencies {
 	// https://mvnrepository.com/artifact/org.elasticsearch/elasticsearch
 	//compileInclude group: 'org.elasticsearch', name: "elasticsearch", version: '2.2.0'
 	// local libs that are available in DXP
-	compileInclude fileTree(include: ['*.jar'], dir: 'libs')
+	compileOnly fileTree(include: ['*.jar'], dir: 'libs')
 }
 
 repositories {
