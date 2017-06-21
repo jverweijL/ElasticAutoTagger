@@ -8,11 +8,13 @@ import com.liferay.asset.kernel.service.persistence.AssetEntryQuery;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleLocalServiceUtil;
 import com.liferay.portal.kernel.exception.ModelListenerException;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.util.PropsUtil;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -29,7 +31,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 /*import java.net.URL;*/
 import java.util.List;
-
+import java.util.Properties;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -47,71 +49,65 @@ import org.osgi.service.component.annotations.Component;
 	service = ModelListener.class
 )
 public class ElasticAutoTagger extends BaseModelListener<AssetEntry> {
-	
-	//TODO make this dynamic with elastic perculator
-	//String autoTag = "autotag";
-	
+
 	private static Log _log = LogFactoryUtil.getLog(ElasticAutoTagger.class);
 	private static String USER_AGENT = "Mozarella/5.0";
+	private static Properties props = PropsUtil.getProperties();
+	private static String HAS_TAG_PROPERTY = "com.liferay.tagger.has-tag";
+	private static String TAGGER_SERVICE_PROPERTY = "com.liferay.tagger.service.url";
 
 	@Override
 	public void onAfterCreate(AssetEntry entry) throws ModelListenerException {
 		super.onAfterCreate(entry);
 		
-		//TODO only autotag if there's an autotag tag
-		
 		if (entry.getClassName().equalsIgnoreCase(JournalArticle.class.getName())) {
-			_log.error("TAG ARTICLE " + entry.getTitle());
-			_log.error("TAG ARTICLE " + entry.getTitleCurrentValue());
-			_log.error("TAG ARTICLE " + entry.getTitleCurrentLanguageId());
-			//_log.error("TAG ARTICLE " + entry.getTitle(entry.getTitleCurrentLanguageId()));
-			/*Properties props = PropsUtil.getProperties();
-		      Enumeration<Object> e = props.keys();
-			
-	
-		    while (e.hasMoreElements()) {
-		      String key = (String) e.nextElement();
-		      _log.error(key + " -- " + props.getProperty(key));
-		    }*/
-			
 			try {
 				
-				
-				String[] tags = fetchTags(entry.getTitleCurrentValue());
-				
-				if (tags != null && tags.length > 0) {
-				ServiceContext serviceContext = new ServiceContext();
-				serviceContext.setCompanyId(entry.getCompanyId());
-				  
-				//TODO loop over comma-separated items in case of multiple tags..
-				String tagName = tags[0];
-				_log.info("tagname: " + tagName);
-				AssetTag assetTag;
-				if (AssetTagLocalServiceUtil.hasTag(entry.getGroupId(), tagName)) {
-					assetTag = AssetTagLocalServiceUtil.getTag(entry.getGroupId(), tagName);
-				} else {
-					_log.info("create tagname: " + tagName);
-					assetTag = AssetTagLocalServiceUtil.addTag(entry.getUserId(), entry.getGroupId(), tagName, serviceContext);
-				}
-				
-				
-				
-				
-				long[] tagIds = { assetTag.getTagId() };
-				
-				_log.info("tag: " + assetTag.getName());
-				
-				
-					_log.info("entryID: " + entry.getEntryId());
-				
-					// connect the tag to the asset
-					AssetTagLocalServiceUtil.addAssetEntryAssetTag(entry.getEntryId(), assetTag);
+				if (mustbeTagged(entry)) {
+					String[] tags = fetchTags(entry.getTitleCurrentValue());
 					
-				
+					if (tags != null && tags.length > 0) {
+						ServiceContext serviceContext = new ServiceContext();
+						serviceContext.setCompanyId(entry.getCompanyId());
+						  
+						//loop over comma-separated items in case of multiple tags..
+						for (String tagName: tags) {
+						//String tagName = tags[0];
+							_log.debug("tagname: " + tagName);
+							AssetTag assetTag;
+							if (AssetTagLocalServiceUtil.hasTag(entry.getGroupId(), tagName)) {
+								assetTag = AssetTagLocalServiceUtil.getTag(entry.getGroupId(), tagName);
+							} else {
+								_log.debug("create tagname: " + tagName);
+								assetTag = AssetTagLocalServiceUtil.addTag(entry.getUserId(), entry.getGroupId(), tagName, serviceContext);
+							}				
+							
+							long[] tagIds = { assetTag.getTagId() };
+							_log.debug("tag: " + assetTag.getName());
+							_log.debug("entryID: " + entry.getEntryId());
+						
+							// connect the tag to the asset
+							AssetTagLocalServiceUtil.addAssetEntryAssetTag(entry.getEntryId(), assetTag);
+						}
+					}
 				}
 			} catch (Exception ex) {
 				_log.error("Foutje: " + ex.getMessage());
 			}
+		}
+	}
+
+	private boolean mustbeTagged(AssetEntry entry) throws PortalException {
+		//only autotag if there's an autotag tag or if it's empty
+		String triggerTagName = props.getProperty(HAS_TAG_PROPERTY, "");
+		if (triggerTagName.isEmpty()) {
+			_log.debug("No trigger tagname found");
+			return true;
+		} else {
+			_log.debug("Checking entry for tag " + triggerTagName);
+			AssetTag triggerTag = AssetTagLocalServiceUtil.getTag(entry.getGroupId(), triggerTagName);
+			_log.debug("Entry has tag: " + entry.getTags().contains(triggerTag));
+			return entry.getTags().contains(triggerTag);
 		}
 	}
 
@@ -122,7 +118,8 @@ public class ElasticAutoTagger extends BaseModelListener<AssetEntry> {
 	 * @throws ProtocolException
 	 */
 	private String[] fetchTags(String text) throws MalformedURLException, IOException, ProtocolException {
-		String url = "http://localhost:8080/tagger-service/rest/tags";
+		//TODO this must be configurable
+		String url = props.getProperty(TAGGER_SERVICE_PROPERTY, "http://localhost:8080/tagger-service/rest/tags");
 
 		URL obj = new URL(url);
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -141,14 +138,12 @@ public class ElasticAutoTagger extends BaseModelListener<AssetEntry> {
 		wr.flush();
 		wr.close();
 		
-		
 		int responseCode = con.getResponseCode();
-		System.out.println("\nSending 'POST' request to URL : " + url);
-		System.out.println("Post parameters : " + urlParameters);
-		System.out.println("Response Code : " + responseCode);
+		_log.debug("\nSending 'POST' request to URL : " + url);
+		_log.debug("Post parameters : " + urlParameters);
+		_log.debug("Response Code : " + responseCode);
 
-		BufferedReader in = new BufferedReader(
-		        new InputStreamReader(con.getInputStream()));
+		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 		String inputLine;
 		StringBuffer response = new StringBuffer();
 
