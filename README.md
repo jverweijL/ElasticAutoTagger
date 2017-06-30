@@ -8,14 +8,16 @@ A Liferay module and rest-service for enabling auto-tagging to Liferay DXP
 
 ## How to install/setup rest-service
  1. First create a war file of the tagger-service
- 1. Install the war file in your application-server (this example uses Tomcat)
- 1. Configure the rest-service
+ 2. Install the war file in your application-server (this example uses Tomcat)
+ 3. Configure the rest-service
  
  ```
  com.liferay.tagger.elasticservice.port=9300
  com.liferay.tagger.elasticservice.host=127.0.0.1
  com.liferay.tagger.elasticservice.clustername=liferay-cluster
  ```
+
+ 4. To test your webservice try `curl http://127.0.0.1:8080/tagger-service/rest/test`
 
 ## How to install/setup module
  1. First build a jar using gradle
