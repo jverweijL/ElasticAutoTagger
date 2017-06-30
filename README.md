@@ -17,7 +17,7 @@ A Liferay module and rest-service for enabling auto-tagging to Liferay DXP
  com.liferay.tagger.elasticservice.clustername=liferay-cluster
  ```
 
- 4. To test your webservice try `curl http://127.0.0.1:8080/tagger-service/rest/test`
+ 4. To test the rest-service try `curl http://127.0.0.1:8080/tagger-service/rest/test`
 
 ## How to install/setup module
  1. First build a jar using gradle
