@@ -20,6 +20,8 @@ Watch this youtube video about [auto-tagging](https://youtu.be/Pxu06zgiNLc?list=
  ```
 
  4. To test the rest-service try `curl http://127.0.0.1:8080/tagger-service/rest/test`
+ 5. To initialize the rest-service run `curl http://127.0.0.1:8080/tagger-service/rest/init`
+ 6. Now run `curl -X POST -F text="I love the little tree"  http://127.0.0.1:8080/tagger-service/rest/tags` and it should come back with `bonsai`
 
 ## How to install/setup module
  1. First build a jar using gradle
