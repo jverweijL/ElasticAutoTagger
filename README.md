@@ -1,5 +1,7 @@
 # ElasticAutoTagger
-A Liferay module and rest-service for enabling auto-tagging to Liferay DXP
+A sample for a module and rest-service for enabling auto-tagging to Liferay DXP.
+
+Watch this youtube video about [auto-tagging](https://youtu.be/Pxu06zgiNLc?list=PLp6cS8SjamlP9YYKLrY_iOAGw3b62PNr-) first
 
 ## Requirements
  - Liferay IDE
