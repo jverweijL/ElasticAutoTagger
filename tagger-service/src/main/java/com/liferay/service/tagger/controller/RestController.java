@@ -108,4 +108,22 @@ public class RestController {
 		}
     }
 	
+	@RequestMapping(value = "/rest/user/{uid}", method = RequestMethod.POST)	
+    public String upsertUserQuery(@PathVariable String uid,@RequestParam String query) {
+		try {
+			return esService.upsertSimpleUserQuery(uid,query);
+		} catch (Exception ex) {
+			return elastichost + ":" + elasticport + "|" + clustername + "|" + ex.getMessage();
+		}
+    }
+	
+	@RequestMapping(value = "/rest/alerts", method = RequestMethod.POST)	
+    public String getAlerts(@RequestParam String text) {
+		try {
+			return esService.getAlerts(text);
+		} catch (Exception ex) {
+			return elastichost + ":" + elasticport + "|" + clustername + "|" + ex.getMessage();
+		}
+    }
+	
 }

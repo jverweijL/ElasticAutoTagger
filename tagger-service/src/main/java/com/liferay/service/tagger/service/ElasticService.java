@@ -1,13 +1,11 @@
 package com.liferay.service.tagger.service;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.UUID;
 
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.percolate.PercolateResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
@@ -15,7 +13,6 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.query.MatchQueryBuilder.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +33,7 @@ public class ElasticService {
 
 	private static Client esClient = null;
 	private static String index = "liferay-autotagger";
+	private static enum QUERYTYPE {ALERTER,TAGGER};
 	
 	public String testESConnection() {
 		return getESClient().prepareSearch(index).setSize(0).execute().actionGet().toString();
@@ -111,7 +109,7 @@ public class ElasticService {
 		            .field("query", qb) // Register the query
 		        .endObject();
 			System.out.println(json.string());
-			return this.upsertQuery(id, json);
+			return this.upsertQuery(id, json, QUERYTYPE.TAGGER);
 		} catch (Exception ex) {
 			return ex.getMessage();
 		}
@@ -128,7 +126,7 @@ public class ElasticService {
 		            .field("query", qb) // Register the query
 		        .endObject();
 			System.out.println(json.string());
-			return this.upsertQuery(id, json);
+			return this.upsertQuery(id, json, QUERYTYPE.TAGGER);
 		} catch (Exception ex) {
 			return ex.getMessage();
 		}
@@ -151,19 +149,18 @@ public class ElasticService {
 	
 			System.out.println(json.string());
 			
-			return this.upsertQuery(id, json);
+			return this.upsertQuery(id, json, QUERYTYPE.TAGGER);
 		} catch (Exception ex) {
 			return ex.getMessage();
 		}
 	}
 	
-	public String upsertQuery(String id, XContentBuilder query) {
-		
+	public String upsertQuery(String id, XContentBuilder query, Enum querytype) {
 		try {
+			String source = query.string().replaceFirst("\\{", "{" + "\"querytype\": \"" + querytype.toString() + "\",");
 			//Index the query = register it in the percolator
-			
 			IndexRequest indexRequest = new IndexRequest(index, ".percolator", id)
-			        .source(query);
+			        .source(source);
 			UpdateRequest updateRequest = new UpdateRequest(index, ".percolator", id)		
 			        .doc(query)
 			        .upsert(indexRequest);              
@@ -190,11 +187,43 @@ public class ElasticService {
 		String result = "";
 		//Iterate over the results
 		for(PercolateResponse.Match match : response) {
-		    //We assume the id is the tagname
-			if (result != "") {
-				result += ",";
+			
+			GetResponse item = getESClient().prepareGet(index, ".percolator", match.getId().toString()).execute().actionGet();
+			String querytype = (String) item.getSource().get("querytype");
+			
+			if (querytype != null && !querytype.isEmpty() && querytype.equalsIgnoreCase(QUERYTYPE.TAGGER.toString())) {
+			    //We assume the id is the tagname
+				if (result != "") {
+					result += ",";
+				}
+				result += match.getId().toString();
 			}
-			result += match.getId().toString();
+		}
+		return result;
+	}
+	
+	public String getAlerts(String text) {
+		
+		String cleantext = text.replaceAll("\"", "").replaceAll("'", "");
+		
+		PercolateResponse response = getESClient()
+										.preparePercolate()
+										.setIndices(index)
+										.setDocumentType("my-type")
+										.setSource("{\"doc\" : {\"message\" : \""+ cleantext + "\"}}").execute().actionGet();
+		
+		String result = "";
+		//Iterate over the results
+		for(PercolateResponse.Match match : response) {
+			GetResponse item = getESClient().prepareGet(index, ".percolator", match.getId().toString()).execute().actionGet();
+			String ownerid = (String) item.getSource().get("owner");
+			String querytype = (String) item.getSource().get("querytype");
+			if (querytype != null && !querytype.isEmpty() && querytype.equalsIgnoreCase(QUERYTYPE.ALERTER.toString()) && ownerid != null && !ownerid.isEmpty()) {
+				if (result != "") {
+					result += ",";
+				}
+				result += ownerid;
+			}
 		}
 		return result;
 	}
@@ -222,6 +251,23 @@ public class ElasticService {
 	}
 
 	
-
+	public String upsertSimpleUserQuery(String uid, String query) {
+		QueryBuilder qb = QueryBuilders.matchQuery("message", query);
+		
+		try {
+			XContentBuilder json = XContentFactory.jsonBuilder()
+			        .startObject()
+			        .field("owner", uid) //owner of this query
+		            .field("query", qb) // Register the query
+		        .endObject();
+			
+			System.out.println(json.string());
+			return this.upsertQuery(UUID.randomUUID().toString(), json,QUERYTYPE.ALERTER);
+		} catch (Exception ex) {
+			return ex.getMessage();
+		}
+		
+		//System.out.println(json.string());
+	}
 	
 }

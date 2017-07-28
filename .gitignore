@@ -11,4 +11,11 @@
 /ElasticTagger/.settings
 /ElasticTagger/.project
 /ElasticTagger/.classpath
+/ElasticAlerter/bin
+/ElasticAlerter/build
+/ElasticAlerter/gradle
+/ElasticAlerter/.gradle
+/ElasticAlerter/.settings
+/ElasticAlerter/.project
+/ElasticAlerter/.classpath
 /apache-tomcat-8.5.15

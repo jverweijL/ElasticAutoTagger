@@ -92,7 +92,7 @@ public class ElasticAutoTagger extends BaseModelListener<AssetEntry> {
 					}
 				}
 			} catch (Exception ex) {
-				_log.error("Foutje: " + ex.getMessage());
+				_log.error("Error: " + ex.getMessage());
 			}
 		}
 	}
