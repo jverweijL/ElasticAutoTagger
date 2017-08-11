@@ -12,12 +12,20 @@ import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
+import com.liferay.portal.kernel.template.ClassLoaderTemplateResource;
+import com.liferay.portal.kernel.template.StringTemplateResource;
+import com.liferay.portal.kernel.template.Template;
+import com.liferay.portal.kernel.template.TemplateConstants;
+import com.liferay.portal.kernel.template.TemplateException;
+import com.liferay.portal.kernel.template.TemplateManagerUtil;
+import com.liferay.portal.kernel.template.TemplateResource;
+import com.liferay.portal.kernel.template.URLTemplateResource;
 import com.liferay.portal.kernel.util.PropsUtil;
-
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -42,7 +50,7 @@ import org.osgi.service.component.annotations.Component;
 )
 public class ElasticAlerter extends BaseModelListener<AssetEntry> {
 
-	private static Log _log = LogFactoryUtil.getLog(ElasticAlerter.class);
+	private static Log log = LogFactoryUtil.getLog(ElasticAlerter.class);
 	private static String USER_AGENT = "Mozarella/5.0";
 	private static Properties props = PropsUtil.getProperties();
 	private static String ALERTER_SERVICE_PROPERTY = "com.liferay.alerter.service.url";
@@ -63,7 +71,7 @@ public class ElasticAlerter extends BaseModelListener<AssetEntry> {
 					  
 					//loop over comma-separated items in case of multiple uids..
 					for (String uid: uids) {
-						_log.debug("uid: " + uid);						
+						log.debug("uid: " + uid);						
 						
 						User user = UserLocalServiceUtil.getUser(Long.parseLong(uid));
 						
@@ -72,18 +80,56 @@ public class ElasticAlerter extends BaseModelListener<AssetEntry> {
 				}
 				
 			} catch (Exception ex) {
-				_log.error("Error: " + ex.getMessage());
+				log.error("Error: " + ex.getMessage());
 			}
 		}
 	}
 	
 	private void sentMail(User user, AssetEntry entry) {
-		_log.debug("ready to sent a mail to: " + user.getEmailAddress());
-		_log.debug("title: " + entry.getTitleCurrentValue());
+		log.debug("ready to sent a mail to: " + user.getEmailAddress());
+		log.debug("title: " + entry.getTitleCurrentValue());
+	
 		
-		String body = "Hi " + user.getFirstName() + "," + System.lineSeparator() + System.lineSeparator();
-		body += "This article was published 56 milliseconds ago and might interest you"  + System.lineSeparator() + System.lineSeparator();
-		body += entry.getTitleCurrentValue();		
+		//body += entry.getTitleCurrentValue();			
+		
+		//TemplateResource templateResource =
+		//		TemplateResourceLoaderUtil.getTemplateResource(
+		//			TemplateConstants.LANG_TYPE_FTL, resourcePath);
+		
+		String body = "";		
+
+		try {
+			//TemplateResource templateResource = new StringTemplateResource("0", "my email ${message}");
+			
+			TemplateResource templateResource = new URLTemplateResource("0",this.getClass().getClassLoader().getResource("personal_alert.ftl"));
+			Template template = TemplateManagerUtil.getTemplate(
+				TemplateConstants.LANG_TYPE_FTL, templateResource, false);
+			
+			// Add the data-models
+	        template.put("user", user);
+			template.put("entry", entry);				
+	        
+	        StringWriter out = new StringWriter();
+	        
+	        template.processTemplate(out);
+	        body = out.toString();		        
+	        log.debug(body);
+	        
+		} catch (TemplateException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+/*        //List parsing 
+        List<String> mailDetails = new ArrayList<String>();
+        mailDetails.add(fromAddress);
+        mailDetails.add(fromName);
+        mailDetails.add(toAddress);
+        mailDetails.add(toName);
+        mailDetails.add(subject);
+        mailDetails.add(body);
+
+        data.put("mailDetails", mailDetails);*/
 
 		try {			
 	    		MailMessage mailMessage = new MailMessage();
@@ -91,9 +137,10 @@ public class ElasticAlerter extends BaseModelListener<AssetEntry> {
 	    		mailMessage.setFrom(new InternetAddress("recyclebin@liferay.com"));
 	    		mailMessage.setSubject("New interesting article");
 	    		mailMessage.setBody(body);
+	    		mailMessage.setHTMLFormat(true);
 	    		
 	    		MailServiceUtil.sendEmail(mailMessage);
-	    		_log.debug("Send mail with Plain Text");
+	    		log.debug("Send mail");
 		} catch (AddressException e) {
 		    	e.printStackTrace();
 		}
@@ -127,9 +174,9 @@ public class ElasticAlerter extends BaseModelListener<AssetEntry> {
 		wr.close();
 		
 		int responseCode = con.getResponseCode();
-		_log.debug("\nSending 'POST' request to URL : " + url);
-		_log.debug("Post parameters : " + urlParameters);
-		_log.debug("Response Code : " + responseCode);
+		log.debug("\nSending 'POST' request to URL : " + url);
+		log.debug("Post parameters : " + urlParameters);
+		log.debug("Response Code : " + responseCode);
 
 		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 		String inputLine;
@@ -141,7 +188,7 @@ public class ElasticAlerter extends BaseModelListener<AssetEntry> {
 		in.close();
 
 		//print result
-		_log.error("Alerter: " + response.toString());
+		log.error("Alerter: " + response.toString());
 		if (response != null && response.length() > 0) {
 			return response.toString().split(",");
 		} else {
