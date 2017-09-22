@@ -23,8 +23,8 @@ Watch this youtube video about [auto-tagging](https://youtu.be/Pxu06zgiNLc?list=
  5. To initialize the rest-service run `curl http://127.0.0.1:8080/tagger-service/rest/init`
  6. Now run `curl -X POST -F text="I love the little tree"  http://127.0.0.1:8080/tagger-service/rest/tags` and it should come back with `bonsai`
 
-## How to install/setup module
- 1. First build a jar using gradle
+## How to install/setup ElasticTagger module
+ 1. First build a jar in the ElasticTagger project using gradle
  1. Deploy the jar into the Liferay deploy folder
  1. Configure the new module by adding the following parameters in your portal-ext.properties
  
