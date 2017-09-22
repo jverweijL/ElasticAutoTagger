@@ -8,7 +8,7 @@ Watch this youtube video about [auto-tagging](https://youtu.be/Pxu06zgiNLc?list=
  - Liferay DXP
  - Elasticsearch (not embedded)
 
-## How to install/setup rest-service
+## How to install/setup tagger-service rest webservice
  1. First create a war file of the tagger-service
  2. Install the war file in your application-server (this example uses Tomcat)
  3. Configure the rest-service (see also [externalized properties](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html))
