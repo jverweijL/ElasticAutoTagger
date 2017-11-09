@@ -72,7 +72,7 @@ public class ElasticService {
 		//reqister a sample query
 		try {
 		getESClient().prepareIndex(index, ".percolator","bonsai")
-	        .setSource("{\"query\" : {\"match\" : {\"message\" : \"bonsai tree\"}}}")
+	        .setSource("{\"querytype\" : \"" + QUERYTYPE.TAGGER.toString() + "\", \"query\" : {\"match\" : {\"message\" : \"bonsai tree\"}}}")
 	        .get();
 		} catch (Exception ex) {
 			response += " | " + index + " " + ex.getMessage();
