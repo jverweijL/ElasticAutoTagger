@@ -124,7 +124,7 @@ public class ElasticAutoTagger extends BaseModelListener<AssetEntry> {
 		URL obj = new URL(url);
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 		
-		//add reuqest header
+		//add request header
 		con.setRequestMethod("POST");
 		con.setRequestProperty("User-Agent", USER_AGENT);
 		con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
@@ -137,6 +137,7 @@ public class ElasticAutoTagger extends BaseModelListener<AssetEntry> {
 		wr.writeBytes(urlParameters);
 		wr.flush();
 		wr.close();
+		
 		
 		int responseCode = con.getResponseCode();
 		_log.debug("\nSending 'POST' request to URL : " + url);
@@ -151,6 +152,7 @@ public class ElasticAutoTagger extends BaseModelListener<AssetEntry> {
 			response.append(inputLine);
 		}
 		in.close();
+
 
 		//print result
 		_log.error("AutoTagger: " + response.toString());

@@ -91,16 +91,28 @@ public class ElasticService {
 	}
 	
 	public String getList() {
-		// TODO Add paging 
-		return getESClient().prepareSearch(index).setTypes(".percolator").setQuery(QueryBuilders.matchAllQuery()).get().toString();
+		return this.getList(0, 20);
+	}
+	
+	public String getList(int from, int size) {
+		return getESClient()
+				.prepareSearch(index)
+				.setTypes(".percolator")
+				.setQuery(QueryBuilders
+				.matchAllQuery())
+				.setFrom(from)
+				.setSize(size)
+				.get()
+				.toString();
 	}
 	
 	public String removeQuery(String id) {
-		// TODO what if it goes wrong
+		// TODO what if it goes wrong?
 		return getESClient().prepareDelete(index, ".percolator", id).get().toString();
 	}
 	
 	public String upsertSimpleQuery(String id, String query) {
+		//verstappen vettel kubica
 		QueryBuilder qb = QueryBuilders.matchQuery("message", query);
 		
 		try {
@@ -134,7 +146,7 @@ public class ElasticService {
 	
 	public String upsertJSONQuery(String id, String jsonquery) {
 		System.out.println(jsonquery);
-		QueryBuilder qb = QueryBuilders.wrapperQuery(jsonquery);
+		//QueryBuilder qb = QueryBuilders.wrapperQuery(jsonquery);
 		
 		
 		try {
@@ -178,11 +190,17 @@ public class ElasticService {
 		
 		String cleantext = text.replaceAll("\"", "").replaceAll("'", "");
 		
+		System.out.println("cleantext: " + cleantext);
+		
+		String source = "{\"doc\" : {\"message\" : \"" + cleantext + "\"}}";
+		
+		System.out.println(source);
+		
 		PercolateResponse response = getESClient()
 										.preparePercolate()
 										.setIndices(index)
 										.setDocumentType("my-type")
-										.setSource("{\"doc\" : {\"message\" : \""+ cleantext + "\"}}").execute().actionGet();
+										.setSource(source).execute().actionGet();
 		
 		String result = "";
 		//Iterate over the results
@@ -196,6 +214,8 @@ public class ElasticService {
 				if (result != "") {
 					result += ",";
 				}
+				
+				System.out.println("Result found:" + match.getId().toString());
 				result += match.getId().toString();
 			}
 		}
@@ -242,7 +262,9 @@ public class ElasticService {
 							.builder()
 							.settings(settings)
 							.build()
-							.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(elastichost),elasticport));
+							.addTransportAddress(
+									new InetSocketTransportAddress(
+											InetAddress.getByName(elastichost),elasticport));
 			} catch (UnknownHostException ex) {
 				esClient = null;
 			}

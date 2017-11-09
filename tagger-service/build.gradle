@@ -30,7 +30,7 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-thymeleaf')
 	//compile('org.springframework.boot:spring-boot-starter-web')
 	// https://mvnrepository.com/artifact/org.elasticsearch/elasticsearch
-	compile group: 'org.elasticsearch', name: 'elasticsearch', version: '2.2.0'
+	compile group: 'org.elasticsearch', name: 'elasticsearch', version: '2.4.6'
 	
 	providedRuntime('org.springframework.boot:spring-boot-starter-tomcat')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
