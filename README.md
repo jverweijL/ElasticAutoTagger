@@ -12,12 +12,25 @@ Watch this youtube video about [auto-tagging](https://youtu.be/Pxu06zgiNLc?list=
  1. First create a war file of the tagger-service
  2. Install the war file in your application-server (this example uses Tomcat)
  3. Configure the rest-service (see also [externalized properties](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html))
- 
+
+
  ```
  com.liferay.tagger.elasticservice.port=9300
  com.liferay.tagger.elasticservice.host=127.0.0.1
  com.liferay.tagger.elasticservice.clustername=liferay-cluster
  ```
+
+ You can also configure the rest-service using a context xml file like
+ ```
+ tagger-service.xml 
+<?xml version="1.0" encoding="UTF-8"?>
+<Context logEffectiveXml="true" docBase="/data/webapps/tagger-service.war">
+	<Parameter name="com.liferay.tagger.elasticservice.port" value="9300" override="true"/>
+	<Parameter name="com.liferay.tagger.elasticservice.host" value="127.0.0.1" override="true"/>
+	<Parameter name="com.liferay.tagger.elasticservice.clustername" value="liferay-cluster" override="true"/>
+</Context>
+ ```
+ 
 
  4. To test the rest-service try `curl http://127.0.0.1:8080/tagger-service/rest/test`
  5. To initialize the rest-service run `curl http://127.0.0.1:8080/tagger-service/rest/init`
