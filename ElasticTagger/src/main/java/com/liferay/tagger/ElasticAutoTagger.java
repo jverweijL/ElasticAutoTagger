@@ -155,7 +155,7 @@ public class ElasticAutoTagger extends BaseModelListener<AssetEntry> {
 
 
 		//print result
-		_log.error("AutoTagger: " + response.toString());
+		_log.info("AutoTagger: " + response.toString());
 		if (response != null && response.length() > 0) {
 			return response.toString().split(",");
 		} else {
