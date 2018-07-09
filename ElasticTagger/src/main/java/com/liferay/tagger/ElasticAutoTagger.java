@@ -116,6 +116,7 @@ public class ElasticAutoTagger extends BaseModelListener<AssetEntry> {
 	 * @throws MalformedURLException
 	 * @throws IOException
 	 * @throws ProtocolException
+	 *
 	 */
 	private String[] fetchTags(String text) throws MalformedURLException, IOException, ProtocolException {
 		//TODO this must be configurable
